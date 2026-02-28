@@ -1,0 +1,149 @@
+# =============================================================================
+# エイリアス定義
+# =============================================================================
+
+# Gitコマンドの短縮
+# 使用例: g status, g commit -m "fix: ..."
+alias g='git'
+
+# Python簡易HTTPサーバー起動
+# 使用例: http (ポート8000) または http 8080
+alias http='python3 -m http.server'
+
+# AIツールのインストール/更新
+# 使用例: update-claude, update-opencode
+alias "update-claude"="curl -fsSL https://claude.ai/install.sh | bash"
+alias "update-opencode"="curl -fsSL https://opencode.ai/install | bash"
+
+# =============================================================================
+# Git ブランチクリーンアップ関数
+# =============================================================================
+#
+# 【機能概要】
+#   リモートで削除済みのブランチを自動検出し、ローカルから削除する。
+#   また、リモートにまだ存在するブランチを警告表示する。
+#
+# 【動作ステップ】
+#   1. git fetch --prune でリモートの削除状態を同期
+#   2. ": gone]"（リモート追跡削除済み）のローカルブランチを -D で強制削除
+#   3. まだリモートに存在するブランチを列挙（手動削除を促す）
+#
+# 【安全策】
+#   - 削除前に対象ブランチ名を表示（視覚的確認）
+#   - 削除対象がない場合は「✅ No branches to clean.」と表示
+
+gc() {
+  # 1. リモート状態を同期（削除済みブランチの追跡を削除）
+  echo "📡 Fetching remote state..."
+  git fetch --prune
+  echo ""
+
+  # 2. リモートで削除済みのローカルブランチを特定・削除
+  #    grepパターン解説:
+  #      ": gone]" ・・・ git branch -vv の出力で「上流ブランチ消失」を示す
+  #      sed 's/^\*//' ・・・ 現在のブランチを示す "*" マーカーを除去
+  local gone_branches=$(git branch -vv | grep ": gone]" | awk '{print $1}' | sed 's/^\*//')
+
+  if [ -n "$gone_branches" ]; then
+    echo "🗑️  Deleting local branches removed from remote:"
+    echo "$gone_branches" | sed 's/^/  - /'
+    echo ""
+
+    # xargs -r: 入力が空の場合は実行しない（エラー防止）
+    echo "$gone_branches" | xargs -r git branch -D
+    echo "✅ Deleted successfully."
+    echo ""
+  fi
+
+  # 3. リモートにまだ存在するブランチを警告
+  #    grep -v ": gone]" で「消失していない」＝「まだリモートに存在する」ブランチを抽出
+  local active_branches=$(git branch -vv | grep -v ": gone]" | grep '\[origin/' | awk '{print $1}' | sed 's/^\*//')
+
+  if [ -n "$active_branches" ]; then
+    echo "⚠️  These branches still exist on origin (consider deleting on GitHub):"
+    echo "$active_branches" | sed 's/^/  - /'
+    echo ""
+    echo "💡 Next steps:"
+    echo "   1. Check if merged: git branch --merged main"
+    echo "   2. Delete on GitHub: gh repo view --web → Branches"
+    echo "   3. Re-run 'gc' to clean local refs"
+    echo ""
+  fi
+
+  # 4. 何もない場合のフィードバック
+  if [ -z "$gone_branches" ] && [ -z "$active_branches" ]; then
+    echo "✅ No branches to clean. Working directory is tidy."
+  fi
+}
+
+# =============================================================================
+# プロンプト表示設定
+# =============================================================================
+#
+# 【表示形式】
+#   username@hostname current_dir (git_branch) $
+#   例: u7chan@my-pc workspace (feature/login) $
+#
+# 【色設定】
+#   カレントディレクトリ: 青色 (\e[34m)
+#   Gitブランチ名:       緑色 (\e[32m)
+#   リセット:            標準色 (\e[0m)
+#
+# 【技術メモ】
+#   \[ と \] で囲むことで、Bashに「非表示文字（色コード）」を通知。
+#   これがないと長いコマンド入力時に折り返しが壊れる。
+
+git_branch() {
+  # 2>/dev/null でGitリポジトリ外でのエラーを抑制
+  local branch=$(git branch --show-current 2>/dev/null)
+  [[ -n "$branch" ]] && echo " ($branch)"
+}
+
+# 構造分解:
+# \u@\h                  : ユーザー名@ホスト名
+# \[\e[34m\]\W\[\e[0m\]  : 青色でカレントディレクトリ（基底名のみ）
+# \[\e[32m\]$(git_branch) : 緑色でGitブランチ（存在すれば）
+# \[\e[0m\]\$             : 色リセット後、$（一般ユーザー）または #（root）
+PS1='\u@\h \[\e[34m\]\W\[\e[0m\]\[\e[32m\]$(git_branch)\[\e[0m\] \$ '
+
+# =============================================================================
+# LiteLLM Proxy + Claude Compatible Environment Variables
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Load secrets (API keys / base URL override)
+# -----------------------------------------------------------------------------
+[ -f ~/.litellm-proxy.secrets ] && source ~/.litellm-proxy.secrets
+
+# -----------------------------------------------------------------------------
+# Defaults (safe fallback)
+# -----------------------------------------------------------------------------
+export LITELLM_BASE_URL="${LITELLM_BASE_URL:-http://localhost:4000}"
+
+# -----------------------------------------------------------------------------
+# Default Claude Model Mapping
+# -----------------------------------------------------------------------------
+export CLAUDE_CODE_OPUS_MODEL="${CLAUDE_CODE_OPUS_MODEL:-claude-opus-4-6}"
+export CLAUDE_CODE_SONNET_MODEL="${CLAUDE_CODE_SONNET_MODEL:-claude-sonnet-4-6}"
+export CLAUDE_CODE_HAIKU_MODEL="${CLAUDE_CODE_HAIKU_MODEL:-claude-haiku-4-5}"
+
+# -----------------------------------------------------------------------------
+# Load model overrides (optional)
+# -----------------------------------------------------------------------------
+[ -f ~/.litellm-models ] && source ~/.litellm-models
+
+# -----------------------------------------------------------------------------
+# Anthropic Compatibility
+# -----------------------------------------------------------------------------
+export ANTHROPIC_BASE_URL="$LITELLM_BASE_URL"
+export ANTHROPIC_AUTH_TOKEN="$LITELLM_API_KEY"
+
+export ANTHROPIC_DEFAULT_OPUS_MODEL="$CLAUDE_CODE_OPUS_MODEL"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="$CLAUDE_CODE_SONNET_MODEL"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="$CLAUDE_CODE_HAIKU_MODEL"
+
+# -----------------------------------------------------------------------------
+# Runtime Defaults
+# -----------------------------------------------------------------------------
+export CLAUDE_CODE_SUBAGENT_MODEL="$CLAUDE_CODE_HAIKU_MODEL"
+export ANTHROPIC_MODEL="$ANTHROPIC_DEFAULT_SONNET_MODEL"

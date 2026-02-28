@@ -1,0 +1,75 @@
+# =============================================================================
+# .bashrc ユーザー追加設定 (ホスト側: WSL - Ubuntu 向け)
+# =============================================================================
+
+# -------------------------
+# SSHエージェント永続化 (DevContainer用)
+# -------------------------
+is_wsl() {
+  grep -qi microsoft /proc/version 2>/dev/null
+}
+
+has_valid_ssh_agent() {
+  [ -n "$SSH_AUTH_SOCK" ] && [ -S "$SSH_AUTH_SOCK" ]
+}
+
+find_ssh_key() {
+  local cand
+  for cand in "$HOME/.ssh/id_ed25519" "$HOME/.ssh/id_rsa" "$HOME/.ssh/id_ecdsa"; do
+    [ -r "$cand" ] && { printf '%s\n' "$cand"; return 0; }
+  done
+  return 1
+}
+
+start_keychain_with_key() {
+  local key="$1"
+  # keychain がない場合は何もしない
+  command -v keychain >/dev/null 2>&1 || return 1
+  # keychain の eval 出力を環境に取り込む（--eval を明示）
+  eval "$(keychain --quiet --nogui --eval --agents ssh "$key")"
+}
+
+setup_ssh_agent_for_devcontainer() {
+  # WSL 以外では無効化（ホスト側: WSL 向け）
+  is_wsl || return 0
+
+  # 既に有効なエージェントがあればそれを優先
+  if has_valid_ssh_agent; then
+    export SSH_AUTH_SOCK
+    return 0
+  fi
+
+  # 非対話シェルでは起動しない
+  case "$-" in *i*) ;; *) return 0;; esac
+
+  # 鍵の候補を見つけて keychain を起動
+  local key
+  if key="$(find_ssh_key)"; then
+    start_keychain_with_key "$key" || return 0
+  fi
+}
+
+# 呼び出し（.bashrc をソースする想定で一度だけ実行）
+setup_ssh_agent_for_devcontainer
+
+# -------------------------
+# プロジェクトエイリアス設定
+# -------------------------
+alias monorepo="cd $HOME/workspace/monorepo"
+alias shell="cd $HOME/workspace/shell"
+alias skills="cd $HOME/workspace/agent-skills"
+
+# -------------------------
+# パス関連
+# -------------------------
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.opencode/bin:$PATH"
+export PATH="$HOME/workspace/shell:$PATH"
+
+# -------------------------
+# ローカル設定の読み込み
+# -------------------------
+# ~/.bashrc.local が存在すれば読み込む（存在しなくてもエラーにしない）
+if [ -r "$HOME/.bashrc.local" ]; then
+  source "$HOME/.bashrc.local"
+fi
