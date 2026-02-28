@@ -10,10 +10,22 @@ alias g='git'
 # 使用例: http (ポート8000) または http 8080
 alias http='python3 -m http.server'
 
-# AIツールのインストール/更新
+# ツールのインストール/更新
 # 使用例: update-claude, update-opencode
 alias "update-claude"="curl -fsSL https://claude.ai/install.sh | bash"
 alias "update-opencode"="curl -fsSL https://opencode.ai/install | bash"
+alias "update-nvm"="curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash"
+
+# =============================================================================
+# nvm（Node Version Manager）設定
+# このブロックは ~/.nvm に nvm がインストールされている場合のみ読み込まれます。
+# - インストール: nvm install --lts      # LTS 版をインストール
+# - 利用可能バージョン確認: nvm ls
+# - 現在のデフォルトを確認/変更: nvm current / nvm alias default <version>
+# =============================================================================
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # =============================================================================
 # Git ブランチクリーンアップ関数
