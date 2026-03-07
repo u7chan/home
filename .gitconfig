@@ -1,0 +1,42 @@
+#[user]
+#  name = {YOU NAME}
+#  email = {YOU_EMAIL}@users.noreply.github.com
+
+[alias]
+  ; status 表示
+  s  = status            ; 通常表示
+  ss = status -s         ; short 表示
+
+  ; ブランチ操作
+  b   = branch
+  sw  = switch           ; ブランチ切り替え
+  swc = switch -c        ; ブランチ作成＋切り替え
+  swm = switch main
+
+  ; fetch 系
+  f   = fetch --verbose          ; fetch 詳細表示
+  fa  = fetch --all --verbose    ; 全リモートを fetch
+  fp  = fetch --prune --verbose  ; 削除済みブランチを整理
+  fap = fetch --all --prune --verbose ; 全リモート fetch + 整理
+
+  ; pull 系
+  pl  = pull --verbose           ; pull 詳細表示
+  plr = pull --rebase --verbose  ; rebase 付き pull
+  plm = !git fetch origin main:main --verbose        ; mainブランチだけfetch（切り替えず）
+  pld = !git fetch origin develop:develop --verbose  ; developブランチだけfetch（切り替えず）
+
+  ; push 系
+  p   = push --verbose   ; push 内容を詳細表示（事故防止）
+  puo = push -u origin HEAD ; 現在ブランチを upstream 設定付きで push
+
+  ; commit 系
+  cm  = commit           ; -m は明示的に書く派
+  cma = commit --amend --no-edit ; 直前コミット修正（メッセージ維持）
+
+  ; log 系
+  lg   = log --oneline --graph --decorate ; 視覚的ログ
+  last = log -1 HEAD    ; 最新コミットのみ表示
+
+  ; 作業ツリー操作
+  unstage = restore --staged . ; add した変更を戻す
+  discard = restore .          ; ワークツリーの変更を破棄
