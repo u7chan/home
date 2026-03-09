@@ -10,11 +10,56 @@ alias g='git'
 # 使用例: http (ポート8000) または http 8080
 alias http='python3 -m http.server'
 
-# ツールのインストール/更新
-# 使用例: update-claude, update-opencode
+# AIツールのインストール/更新
+# 使用例: update-claude, update-opencode, update-codex
 alias "update-claude"="curl -fsSL https://claude.ai/install.sh | bash"
 alias "update-opencode"="curl -fsSL https://opencode.ai/install | bash"
 alias "update-nvm"="curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash"
+
+update-codex() {
+  local pkg="@openai/codex"
+  local outdated
+  local installed_version
+  local reply
+
+  # npm が使えない環境では処理できない
+  if ! command -v npm >/dev/null 2>&1; then
+    echo "Warning: npm is not installed. Install Node.js/npm first."
+    return 1
+  fi
+
+  # codex のグローバル導入有無を確認
+  installed_version=$(npm list -g "$pkg" --depth=0 2>/dev/null | grep "$pkg@")
+
+  # 未導入なら確認してからインストール
+  if [ -z "$installed_version" ]; then
+    read -r -p "$pkg is not installed. Install it now? [y/N] " reply
+    case "$reply" in
+      [yY]|[yY][eE][sS])
+        echo "Installing $pkg..."
+        npm install -g "$pkg@latest"
+        return $?
+        ;;
+      *)
+        echo "Skipped installation."
+        return 0
+        ;;
+    esac
+  fi
+
+  # 導入済みなら更新の有無だけ確認
+  outdated=$(npm -g outdated "$pkg" 2>/dev/null)
+
+  # 更新がある場合のみ最新版へ更新
+  if echo "$outdated" | grep -q "$pkg"; then
+    echo "Updating $pkg..."
+    npm install -g "$pkg@latest"
+    return $?
+  fi
+
+  # すでに最新なら何もしない
+  echo "$pkg is already up to date."
+}
 
 # =============================================================================
 # nvm（Node Version Manager）設定
