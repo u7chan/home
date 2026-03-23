@@ -16,6 +16,8 @@ Windowsターミナルのキーバインド（カスタムメモ）
 
 Windows Terminal + WSL の組み合わせでは、`.bashrc` に次の一行を追加すると、ペイン複製時にカレントディレクトリを引き継げる。
 
+Bash 設定全体の管理方針は `docs/shell/README.md` を参照。
+
 ```bash
 PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND ; "}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
 ```

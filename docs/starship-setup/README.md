@@ -22,6 +22,8 @@ curl -sS https://starship.rs/install.sh | sh
 
 `~/.bashrc` の最後に以下を追記する。
 
+Bash 設定全体の管理方針は `docs/shell/README.md` を参照。
+
 ```bash
 # starship init
 eval "$(starship init bash)"
