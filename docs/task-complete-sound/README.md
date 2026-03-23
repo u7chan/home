@@ -44,6 +44,8 @@ notify = ["bash", "-lc", "paplay --volume=32768 ~/.voicevox/codex_notify.wav"]
 
 `.claude/settings.json` に `Stop` hook を設定する。
 
+共有用の設定例は `examples/claude/settings.json` で管理し、実際の適用先だけを `.claude/settings.json` として扱う。
+
 ```json
 {
   "hooks": {
