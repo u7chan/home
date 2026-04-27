@@ -1,3 +1,5 @@
+## settings.json
+
 ```jsonc
 {
     "$schema": "https://json.schemastore.org/claude-code-settings.json",
@@ -109,7 +111,7 @@
 }
 ```
 
-statusline.py
+## statusline.py
 
 ```py
 #!/usr/bin/env python3
