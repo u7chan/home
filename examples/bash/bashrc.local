@@ -164,43 +164,87 @@ git_branch() {
 PS1='\u@\h \[\e[34m\]\W\[\e[0m\]\[\e[32m\]$(git_branch)\[\e[0m\] \$ '
 
 # =============================================================================
-# LiteLLM Proxy + Claude Compatible Environment Variables
+# My Claude Launcher
+# provider ごとの .env を読み込み、Claude CLI を切り替えて起動する
+#
+# Setup (create example template):
+#    PROVIDER=example && mkdir -p ~/.config/envs/$PROVIDER && printf 'BASE_URL="https://api.example.com/anthropic"\nAPI_KEY="replace-me"\nMODEL="your-model"\n' > ~/.config/envs/$PROVIDER/.env && find ~/.config/envs -type f -name ".env" -exec chmod 600 {} \; && ls -la ~/.config/envs/*/.env
+#
+# Fix permissions & check existing files:
+#    find ~/.config/envs -type f -name ".env" -exec chmod 600 {} \;
+#
+# Usage:
+#   myclaude <provider> [model] [claude args...]
+#
+# Example:
+#   myclaude zai
+#   myclaude zai glm-4.7
+#   myclaude kimi kimi-k2 --help
 # =============================================================================
+myclaude() {
+  (
+    # xtrace(set -x) によるシークレット漏洩防止
+    set +x
 
-# -----------------------------------------------------------------------------
-# Load secrets (API keys / base URL override)
-# -----------------------------------------------------------------------------
-[ -f ~/.litellm-proxy.secrets ] && source ~/.litellm-proxy.secrets
+    # -------------------------------------------------------------------------
+    # Arguments Check
+    # -------------------------------------------------------------------------
+    if [ $# -lt 1 ]; then
+      echo "usage: myclaude <provider> [model] [claude args...]" >&2
+      echo "example:" >&2
+      echo "  myclaude zai" >&2
+      echo "  myclaude zai glm-4.7" >&2
+      echo "  myclaude kimi kimi-k2 --help" >&2
+      exit 1
+    fi
 
-# -----------------------------------------------------------------------------
-# Defaults (safe fallback)
-# -----------------------------------------------------------------------------
-export LITELLM_BASE_URL="${LITELLM_BASE_URL:-http://localhost:4000}"
+    local provider="$1"
+    shift
 
-# -----------------------------------------------------------------------------
-# Default Claude Model Mapping
-# -----------------------------------------------------------------------------
-export CLAUDE_CODE_OPUS_MODEL="${CLAUDE_CODE_OPUS_MODEL:-claude-opus-4-6}"
-export CLAUDE_CODE_SONNET_MODEL="${CLAUDE_CODE_SONNET_MODEL:-claude-sonnet-4-6}"
-export CLAUDE_CODE_HAIKU_MODEL="${CLAUDE_CODE_HAIKU_MODEL:-claude-haiku-4-5}"
+    # -------------------------------------------------------------------------
+    # Env File
+    # -------------------------------------------------------------------------
+    local env_file="$HOME/.config/envs/$provider/.env"
 
-# -----------------------------------------------------------------------------
-# Load model overrides (optional)
-# -----------------------------------------------------------------------------
-[ -f ~/.litellm-models ] && source ~/.litellm-models
+    if [ ! -f "$env_file" ]; then
+      echo "env file not found: $env_file" >&2
+      exit 1
+    fi
 
-# -----------------------------------------------------------------------------
-# Anthropic Compatibility
-# -----------------------------------------------------------------------------
-export ANTHROPIC_BASE_URL="$LITELLM_BASE_URL"
-export ANTHROPIC_AUTH_TOKEN="$LITELLM_API_KEY"
+    # .env を export 付きで読み込む
+    set -a
+    . "$env_file"
+    set +a
 
-export ANTHROPIC_DEFAULT_OPUS_MODEL="$CLAUDE_CODE_OPUS_MODEL"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="$CLAUDE_CODE_SONNET_MODEL"
-export ANTHROPIC_DEFAULT_HAIKU_MODEL="$CLAUDE_CODE_HAIKU_MODEL"
+    # -------------------------------------------------------------------------
+    # Optional Model Override
+    # 第2引数が --option でなければ model として扱う
+    # -------------------------------------------------------------------------
+    local selected_model="$MODEL"
 
-# -----------------------------------------------------------------------------
-# Runtime Defaults
-# -----------------------------------------------------------------------------
-export CLAUDE_CODE_SUBAGENT_MODEL="$CLAUDE_CODE_HAIKU_MODEL"
-export ANTHROPIC_MODEL="$ANTHROPIC_DEFAULT_SONNET_MODEL"
+    if [ $# -gt 0 ] && [[ "$1" != -* ]]; then
+      selected_model="$1"
+      shift
+    fi
+
+    # -------------------------------------------------------------------------
+    # Info
+    # -------------------------------------------------------------------------
+    echo "== myclaude =="
+    echo "  - provider: $provider"
+    echo "  - base url: $BASE_URL"
+    echo "  - model: $selected_model"
+
+    # -------------------------------------------------------------------------
+    # Run Claude
+    # -------------------------------------------------------------------------
+    env \
+      ANTHROPIC_BASE_URL="$BASE_URL" \
+      ANTHROPIC_AUTH_TOKEN="$API_KEY" \
+      ANTHROPIC_MODEL="$selected_model" \
+      ANTHROPIC_DEFAULT_OPUS_MODEL="${OPUS_MODEL:-$selected_model}" \
+      ANTHROPIC_DEFAULT_SONNET_MODEL="${SONNET_MODEL:-$selected_model}" \
+      ANTHROPIC_DEFAULT_HAIKU_MODEL="${HAIKU_MODEL:-$selected_model}" \
+      claude "$@"
+  )
+}
