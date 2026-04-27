@@ -10,19 +10,10 @@
 
 特に、ツールが実ディレクトリとして誤認しやすい設定や、配置先にだけ意味がある設定は、安全名で `examples/` 側に置いて管理する。
 
-## 入口
+## 使い方
 
-- `docs/shell/README.md`: Bash 設定の役割分担と適用先
-- `docs/litellm/README.md`: LiteLLM 関連 env の扱い
-- `docs/claude/README.md`: Claude 設定の管理方針
-
-## 主要な設定例
-
-- `examples/bash/bashrc`
-- `examples/bash/bashrc.local`
-- `examples/litellm/models.env.example`
-- `examples/litellm/proxy.secrets.env.example`
-- `examples/claude/settings.json`
+目的に近いドキュメントを探し、必要に応じて設定例を実配置先へコピーして使う。
+ルート README には個別記事の索引を持たせず、各ディレクトリ内の README を正とする。
 
 ## 運用ルール
 
