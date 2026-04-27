@@ -73,3 +73,17 @@ export PATH="$HOME/workspace/shell:$PATH"
 if [ -r "$HOME/.bashrc.local" ]; then
   source "$HOME/.bashrc.local"
 fi
+
+# -------------------------
+# その他設定（オプション）
+# -------------------------
+
+# Windowsのターミナルのペイン複製時にディレクトリを引き継ぐ設定
+PROMPT_COMMAND=${PROMPT_COMMAND:+"$PROMPT_COMMAND ; "}'printf "\e]9;9;%s\e\\" "$(wslpath -w "$PWD")"'
+
+# starship init（シェルをいい感じにするやつ）
+# https://starship.rs/ja-JP/faq/
+eval "$(starship init bash)"
+
+# Safe-chain bash initialization script
+source /home/u7dev/.safe-chain/scripts/init-posix.sh
