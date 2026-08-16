@@ -62,6 +62,8 @@ pi auth check --provider opencode-go --no-refresh
 
 Pi の標準設定ディレクトリは `~/.pi/agent` である。`auth.json` は所有者だけが読み書きできる権限にする。
 
+今回の実機検証では、`auth.json` を直接編集せず、Pi の `/login` で `Sign in with an API key` と `OpenCode Go` を選択して API key を登録した。この操作は、Pi の認証フロー経由で `auth.json` に credential を保存する方法 2 に相当する。
+
 ```json
 {
   "opencode-go": {
