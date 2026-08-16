@@ -71,6 +71,20 @@ gpt-5.6-terra
 
 モデルカタログと利用可能なモデルは変更される可能性があるため、README の一覧を固定的な対応表として扱わず、実行時に /model の表示を確認する。
 
+## reasoning / thinking level の設定
+
+Pi の interactive mode では Shift+Tab で thinking level を順番に切り替えられる。/settings の Thinking level から設定することもできる。起動時に指定する場合は、次のように --thinking を使う。
+
+~~~bash
+pi --model openai-codex/gpt-5.6-luna --thinking high
+~~~
+
+Pi 0.84.2 の thinking level には off、minimal、low、medium、high、xhigh、max があるが、利用できるレベルはモデルによって異なる。今回の実機検証で確認したのは、ステータスバーに表示された high だけである。他のレベルへ変更した場合の gpt-5.6-luna の挙動は確認していない。
+
+- [Pi Quickstart](https://pi.dev/docs/latest/quickstart)
+- [Using Pi](https://pi.dev/docs/latest/usage)
+- [Pi Keybindings](https://pi.dev/docs/latest/keybindings)
+
 ## 疎通確認
 
 ### テキスト応答
@@ -98,9 +112,11 @@ probe_dir="$(mktemp -d)"
 
 結果は成功し、作業ディレクトリには . と .. だけが存在した。リポジトリの状態も clean のままで、ファイルの変更はなかった。
 
-### 再起動後の認証状態
+### 新しいPiプロセスでの認証状態
 
-Pi を終了して再起動し、/login を再実行せずに openai-codex のモデルを選択して hello を送信した。再起動後も応答に成功したため、auth.json に保存された credential を再利用できることを確認した。
+検証では、ログインに使ったPiを終了して再起動したのではなく、保存済みの auth.json credential を使う別の非対話Piプロセスを起動した。/login を再実行せずに openai-codex のモデルを選択して hello を送信し、応答に成功したため、新しいPiプロセスが credential を再利用できることを確認した。
+
+Piを終了して同じ手順で再起動する独立した実機検証は、今回の記録では未確認である。
 
 なお、Pi 公式ドキュメントに記載されている token refresh の動作について、実際に有効期限切れを発生させるテストは行っていない。
 
@@ -114,12 +130,13 @@ Pi を終了して再起動し、/login を再実行せずに openai-codex の�
 | モデル | gpt-5.6-luna |
 | テキスト応答 | 成功 |
 | 読み取り専用 tool call | 成功（temporary directory 内の pwd / ls -la） |
-| 再起動後の再利用 | 成功（再ログインなし） |
+| 新しいPiプロセスでの再利用 | 成功（再ログインなし） |
+| Pi終了後の再起動 | 未確認 |
 | Pi の表示 | $0.000 (sub) |
 
 Pi のステータスバーに表示された $0.000 (sub) は、今回の画面で確認できた表示である。ChatGPT 側の利用枠・上限への反映を別画面で照合したわけではないため、利用量の詳細は未確認とする。
 
-検証中、一度モデルカタログの更新がタイムアウトし、キャッシュ済みのモデル一覧を使用する警告が表示された。しかし、選択済みモデルの応答と再起動後の認証確認は成功した。
+検証中、一度モデルカタログの更新がタイムアウトし、キャッシュ済みのモデル一覧を使用する警告が表示された。しかし、選択済みモデルの応答と新しいPiプロセスでの認証確認は成功した。
 
 ## 画像の扱い
 
@@ -160,7 +177,7 @@ Pi 経由の gpt-5.6-luna は画像を受け取り、次のような視覚的特
 | openai-codex | /login のOpenAI Codex OAuth | ChatGPT Plus / Pro のCodexサブスクリプション | 実機検証済み |
 | openai | OPENAI_API_KEY または auth.json のAPI key | OpenAI API の通常のAPI利用 | このIssueでは未検証 |
 
-API key を登録する場合は、/login の Sign in with an API key ではなく openai-codex の subscription login と経路が異なる点に注意する。今回の検証ではAPI keyを使っていない。
+/login の Sign in with an API key で設定する openai provider は、openai-codex の subscription login とは別経路である。今回の検証ではAPI keyを使っていない。
 
 ## 未確認事項と制約
 
