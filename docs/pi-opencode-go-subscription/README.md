@@ -34,7 +34,7 @@ OpenCode Go の公式ドキュメントで、モデル一覧、エンドポイ�
 
 モデル一覧と model ID は変更される可能性があるため、実行時に Pi の表示と公式エンドポイントの結果を確認する。
 
-2026-08-16 に `GET https://opencode.ai/zen/go/v1/models` を確認したところ、HTTP 200 が返り、26 モデルの中に `deepseek-v4-flash` が含まれていた。モデル一覧の確認自体には API key は要求されなかった。
+Issue #59 の検証では、2026-08-16 に `GET https://opencode.ai/zen/go/v1/models` を確認したところ、HTTP 200 が返り、26 モデルの中に `deepseek-v4-flash` が含まれていた。モデル一覧の確認自体には API key は要求されなかった。
 
 ## Pi 側の認証設定
 
@@ -111,7 +111,7 @@ pi --model opencode-go/minimax-m3
 
 ### OpenAI Chat Completions
 
-`deepseek-v4-flash` は Pi の built-in 定義で `api=openai-completions`、base URL は `https://opencode.ai/zen/go/v1` である。リクエスト先は `/chat/completions` になる。
+`deepseek-v4-flash` は Pi 0.84.2 の built-in 定義で `api=openai-completions`、base URL は `https://opencode.ai/zen/go/v1` である。リクエスト先は `/chat/completions` になる。
 
 ### Anthropic Messages
 
@@ -134,7 +134,7 @@ Pi 0.84.2 の Anthropic Messages 実装は、リクエストに `stream: true` �
 
 #### reasoning / thinking
 
-Pi の built-in model 定義では `minimax-m3` は reasoning 対応として扱われ、実行時のステータスバーには thinking level `high` が表示された。一方、今回のターミナル表示では独立した reasoning / thinking 内容は観測しなかった。モデル定義上の対応と、UI 上の思考内容の表示は別に扱う。
+Pi 0.84.2 の built-in model 定義では `minimax-m3` は reasoning 対応として扱われ、実行時のステータスバーには thinking level `high` が表示された。一方、今回のターミナル表示では独立した reasoning / thinking 内容は観測しなかった。モデル定義上の対応と、UI 上の思考内容の表示は別に扱う。
 
 ## 疎通確認
 
